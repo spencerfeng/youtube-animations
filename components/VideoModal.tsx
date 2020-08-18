@@ -24,6 +24,8 @@ import Animated, {
   lessThan,
   spring,
   multiply,
+  interpolate,
+  Extrapolate,
 } from 'react-native-reanimated'
 import { clamp } from 'react-native-redash'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
@@ -35,10 +37,10 @@ import PlayerControls from './PlayerControls'
 const { width, height } = Dimensions.get('window')
 const { statusBarHeight } = Constants
 
-const PLAYER_CONTROLS_HEIGHT = 200
+const PLAYER_CONTROLS_MIN_HEIGHT = 100
 const SNAP_POINT_THRESHOLD_POINT = 100
 
-const bottomBound = height - statusBarHeight - PLAYER_CONTROLS_HEIGHT
+const bottomBound = height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT
 
 interface VideoModalProps {
   video: VideoModel
@@ -142,6 +144,13 @@ const VideoModal = ({ video }: VideoModalProps) => {
       bottomBound
     )
   )
+  const videoControlsHeight = useRef<Node<number>>(
+    interpolate(tY.current, {
+      inputRange: [0, bottomBound],
+      outputRange: [width / 1.78, PLAYER_CONTROLS_MIN_HEIGHT],
+      extrapolate: Extrapolate.CLAMP,
+    })
+  )
 
   // when the component is mounted, we slide it up
   useCode(() => [set(tY.current, slideUp())], [])
@@ -194,7 +203,14 @@ const VideoModal = ({ video }: VideoModalProps) => {
             },
           ]}
         >
-          <View style={{ backgroundColor: 'white', width }}>
+          <Animated.View
+            style={[
+              styles.playerControls,
+              {
+                height: videoControlsHeight.current,
+              },
+            ]}
+          >
             <Video
               source={video.video}
               style={{ width, height: width / 1.78 }}
@@ -204,7 +220,7 @@ const VideoModal = ({ video }: VideoModalProps) => {
             <View style={{ ...StyleSheet.absoluteFillObject }}>
               <PlayerControls title={video.title} onPress={() => true} />
             </View>
-          </View>
+          </Animated.View>
           <View
             style={{
               backgroundColor: 'white',
@@ -235,5 +251,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: 0,
     },
+  },
+  playerControls: {
+    width,
+    backgroundColor: 'white',
   },
 })
