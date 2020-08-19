@@ -32,15 +32,18 @@ import { PanGestureHandler, State } from 'react-native-gesture-handler'
 
 import { Video as VideoModel } from './videos'
 import VideoContent from './VideoContent'
-import PlayerControls from './PlayerControls'
+import PlayerControls, { PLACEHOLDER_WIDTH } from './PlayerControls'
 
 const { width, height } = Dimensions.get('window')
 const { statusBarHeight } = Constants
 
-const PLAYER_CONTROLS_MIN_HEIGHT = 100
+const PLAYER_CONTROLS_MIN_HEIGHT = 80
 const SNAP_POINT_THRESHOLD_POINT = 100
+const VIDEO_WIDTH_CHANGE_HEIGHT_DELTA = 50
 
 const bottomBound = height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT
+
+const AnimatedVideo = Animated.createAnimatedComponent(Video)
 
 interface VideoModalProps {
   video: VideoModel
@@ -152,6 +155,14 @@ const VideoModal = ({ video }: VideoModalProps) => {
     })
   )
 
+  const videoWidth = useRef<Node<number>>(
+    interpolate(tY.current, {
+      inputRange: [bottomBound - VIDEO_WIDTH_CHANGE_HEIGHT_DELTA, bottomBound],
+      outputRange: [width, PLACEHOLDER_WIDTH],
+      extrapolate: Extrapolate.CLAMP,
+    })
+  )
+
   // when the component is mounted, we slide it up
   useCode(() => [set(tY.current, slideUp())], [])
 
@@ -211,15 +222,18 @@ const VideoModal = ({ video }: VideoModalProps) => {
               },
             ]}
           >
-            <Video
-              source={video.video}
-              style={{ width, height: width / 1.78 }}
-              resizeMode={Video.RESIZE_MODE_COVER}
-              shouldPlay={false}
-            />
             <View style={{ ...StyleSheet.absoluteFillObject }}>
               <PlayerControls title={video.title} onPress={() => true} />
             </View>
+            <AnimatedVideo
+              source={video.video}
+              style={{
+                width: videoWidth.current,
+                height: videoControlsHeight.current,
+              }}
+              resizeMode={Video.RESIZE_MODE_COVER}
+              shouldPlay={false}
+            />
           </Animated.View>
           <View
             style={{
