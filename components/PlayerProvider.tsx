@@ -13,9 +13,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  videoModal: {
-    position: 'absolute',
-  },
 })
 
 const PlayerProvider = ({ children }: PlayerProviderProps) => {
@@ -26,8 +23,6 @@ const PlayerProvider = ({ children }: PlayerProviderProps) => {
       <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
         <View style={StyleSheet.absoluteFill}>{children}</View>
-      </View>
-      <View style={styles.videoModal}>
         {video && <VideoModal {...{ video }} />}
       </View>
     </PlayerContext.Provider>
