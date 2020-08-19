@@ -163,6 +163,14 @@ const VideoModal = ({ video }: VideoModalProps) => {
     })
   )
 
+  const videoContentOpacity = useRef<Node<number>>(
+    interpolate(tY.current, {
+      inputRange: [0, bottomBound],
+      outputRange: [1, 0],
+      extrapolate: Extrapolate.CLAMP,
+    })
+  )
+
   // when the component is mounted, we slide it up
   useCode(() => [set(tY.current, slideUp())], [])
 
@@ -235,17 +243,11 @@ const VideoModal = ({ video }: VideoModalProps) => {
               shouldPlay={false}
             />
           </Animated.View>
-          <View
-            style={{
-              backgroundColor: 'white',
-              width,
-              height: height - width / 1.78 - statusBarHeight,
-            }}
-          >
-            <View>
+          <Animated.View style={styles.videoContentContainer}>
+            <Animated.View style={{ opacity: videoContentOpacity.current }}>
               <VideoContent {...{ video }} />
-            </View>
-          </View>
+            </Animated.View>
+          </Animated.View>
         </Animated.View>
       </PanGestureHandler>
     </>
@@ -269,5 +271,10 @@ const styles = StyleSheet.create({
   playerControls: {
     width,
     backgroundColor: 'white',
+  },
+  videoContentContainer: {
+    backgroundColor: 'white',
+    width,
+    height: height - width / 1.78 - statusBarHeight,
   },
 })
