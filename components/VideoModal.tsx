@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Dimensions, StyleSheet, View } from 'react-native'
 import { Video } from 'expo-av'
 import Constants from 'expo-constants'
@@ -140,7 +140,10 @@ const VideoModal = ({ video }: VideoModalProps) => {
   const snapPoint = useRef<Node<number>>(
     cond(
       lessThan(
-        add(tY.current, multiply(velocityY.current, 0.2)),
+        add(
+          add(offset.current, translationY.current),
+          multiply(velocityY.current, 0.2)
+        ),
         bottomBound - SNAP_POINT_THRESHOLD_POINT
       ),
       0,
@@ -171,8 +174,16 @@ const VideoModal = ({ video }: VideoModalProps) => {
     })
   )
 
-  // when the component is mounted, we slide it up
-  useCode(() => [set(tY.current, slideUp())], [])
+  useEffect(() => {
+    if (video) {
+      offset.current.setValue(0)
+      translationY.current.setValue(0)
+      velocityY.current.setValue(0)
+    }
+  }, [video])
+
+  // when the component is mounted or a different video is selected, we slide it up
+  useCode(() => video && [set(tY.current, slideUp())], [video])
 
   // when we pan the modal, we want it to pan with the gesture
   useCode(
