@@ -11,12 +11,9 @@ import Animated, {
   eq,
   set,
   Clock,
-  Easing,
   block,
-  timing,
   stopClock,
   and,
-  neq,
   clockRunning,
   not,
   event,
@@ -26,6 +23,7 @@ import Animated, {
   multiply,
   interpolate,
   Extrapolate,
+  or,
 } from 'react-native-reanimated'
 import { clamp } from 'react-native-redash'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
@@ -49,40 +47,13 @@ interface VideoModalProps {
   video: VideoModel
 }
 
-const slideUp = () => {
-  const clock = new Clock()
-
-  const state = {
-    finished: new Value(0),
-    position: new Value(height - statusBarHeight),
-    frameTime: new Value(0),
-    time: new Value(0),
-  }
-
-  const config = {
-    toValue: new Value(0),
-    duration: 3000,
-    easing: Easing.inOut(Easing.ease),
-  }
-
-  return block([
-    cond(and(not(state.finished), not(clockRunning(clock))), [
-      startClock(clock),
-      set(state.frameTime, 0),
-      set(state.time, 0),
-    ]),
-    timing(clock, state, config),
-    cond(state.finished, [stopClock(clock)]),
-    state.position,
-  ])
-}
-
 const withOffset = (
   offset: Value<number>,
   translationY: Value<number>,
   gestureState: Value<State>,
   velocityY: Value<number>,
-  snapPoint: Node<number>
+  snapPoint: Node<number>,
+  slideDirection: Value<number>
 ) => {
   const clock = new Clock()
 
@@ -105,34 +76,82 @@ const withOffset = (
 
   return block([
     cond(
-      eq(gestureState, State.END),
+      eq(slideDirection, 0),
       [
-        cond(and(not(state.finished), not(clockRunning(clock))), [
-          startClock(clock),
-          set(offset, add(translationY, offset)),
-          set(state.position, offset),
-          set(config.toValue, snapPoint),
-        ]),
-        spring(clock, state, config),
         cond(
-          state.finished,
-          [stopClock(clock), set(state.finished, 0), set(offset, snapPoint)],
-
-          set(offset, state.position)
+          or(eq(gestureState, State.END), eq(gestureState, State.UNDETERMINED)),
+          [
+            cond(and(not(state.finished), not(clockRunning(clock))), [
+              startClock(clock),
+              set(offset, bottomBound),
+              set(state.position, offset),
+              set(config.toValue, new Value(0)),
+            ]),
+            spring(clock, state, config),
+            cond(
+              state.finished,
+              [
+                stopClock(clock),
+                set(state.finished, 0),
+                set(offset, 0),
+                set(slideDirection, -1),
+              ],
+              [set(offset, state.position)]
+            ),
+            state.position,
+          ],
+          [
+            cond(eq(gestureState, State.BEGAN), [
+              cond(clockRunning(clock), [
+                stopClock(clock),
+                set(slideDirection, -1),
+                add(translationY, offset),
+              ]),
+            ]),
+          ]
         ),
-        state.position,
       ],
       [
-        cond(eq(gestureState, State.BEGAN), [
-          cond(clockRunning(clock), stopClock(clock)),
+        cond(eq(slideDirection, -1), [
+          cond(
+            or(
+              eq(gestureState, State.END),
+              eq(gestureState, State.UNDETERMINED)
+            ),
+            [
+              cond(and(not(state.finished), not(clockRunning(clock))), [
+                startClock(clock),
+                set(offset, add(translationY, offset)),
+                set(state.position, offset),
+                set(config.toValue, snapPoint),
+              ]),
+              spring(clock, state, config),
+              cond(
+                state.finished,
+                [
+                  stopClock(clock),
+                  set(state.finished, 0),
+                  set(offset, snapPoint),
+                ],
+                set(offset, state.position)
+              ),
+              state.position,
+            ],
+            [
+              cond(eq(gestureState, State.BEGAN), [
+                cond(clockRunning(clock), stopClock(clock)),
+              ]),
+              add(translationY, offset),
+            ]
+          ),
         ]),
-        add(translationY, offset),
       ]
     ),
   ])
 }
 
 const VideoModal = ({ video }: VideoModalProps) => {
+  const slideDirection = useRef<Value<-1 | 0 | 1>>(new Value(0))
   const tY = useRef<Value<number>>(new Value(bottomBound))
   const gestureState = useRef<Value<State>>(new Value(State.UNDETERMINED))
   const translationY = useRef<Value<number>>(new Value(0))
@@ -177,36 +196,36 @@ const VideoModal = ({ video }: VideoModalProps) => {
 
   useEffect(() => {
     if (video) {
-      offset.current.setValue(0)
-      translationY.current.setValue(0)
-      velocityY.current.setValue(0)
+      slideDirection.current.setValue(0)
     }
   }, [video])
 
-  // when the component is mounted or a different video is selected, we slide it up
-  useCode(() => video && [set(tY.current, slideUp())], [video])
-
-  // when we pan the modal, we want it to pan with the gesture
   useCode(
     () => [
-      cond(neq(gestureState.current, State.UNDETERMINED), [
-        set(
-          tY.current,
-          clamp(
-            withOffset(
-              offset.current,
-              translationY.current,
-              gestureState.current,
-              velocityY.current,
-              snapPoint.current
-            ),
-            0,
-            bottomBound
-          )
-        ),
-      ]),
+      set(
+        tY.current,
+        clamp(
+          withOffset(
+            offset.current,
+            translationY.current,
+            gestureState.current,
+            velocityY.current,
+            snapPoint.current,
+            slideDirection.current
+          ),
+          0,
+          bottomBound
+        )
+      ),
     ],
-    [translationY.current]
+    [
+      translationY.current,
+      slideDirection.current,
+      offset.current,
+      gestureState.current,
+      velocityY.current,
+      snapPoint.current,
+    ]
   )
 
   const onGestureEvent = event([
@@ -242,9 +261,6 @@ const VideoModal = ({ video }: VideoModalProps) => {
               },
             ]}
           >
-            <View style={{ ...StyleSheet.absoluteFillObject }}>
-              <PlayerControls title={video.title} onPress={() => true} />
-            </View>
             <AnimatedVideo
               source={video.video}
               style={{
@@ -254,6 +270,9 @@ const VideoModal = ({ video }: VideoModalProps) => {
               resizeMode={Video.RESIZE_MODE_COVER}
               shouldPlay={false}
             />
+            <View style={{ ...StyleSheet.absoluteFillObject }}>
+              <PlayerControls title={video.title} onPress={() => true} />
+            </View>
           </Animated.View>
           <Animated.View style={styles.videoContentContainer}>
             <Animated.View style={{ opacity: videoContentOpacity.current }}>
