@@ -33,25 +33,22 @@ const styles = StyleSheet.create({
 
 interface PlayerControlsProps {
   title: string
-  onPress: () => boolean
 }
 
-const PlayerControls = ({ title, onPress }: PlayerControlsProps) => {
+const PlayerControls = ({ title }: PlayerControlsProps) => {
   const playerContext = useContext(PlayerContext)
 
   return (
-    <TouchableWithoutFeedback onPress={onPress}>
-      <View style={styles.container}>
-        <View style={styles.placeholder} />
-        <Text style={styles.title} numberOfLines={3}>
-          {title}
-        </Text>
-        <FontAwesome name="play" size={24} color="gray" />
-        <TouchableWithoutFeedback onPress={() => playerContext?.setVideo(null)}>
-          <Feather name="x" size={24} color="gray" />
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
+    <View style={styles.container}>
+      <View style={styles.placeholder} />
+      <Text style={styles.title} numberOfLines={3}>
+        {title}
+      </Text>
+      <FontAwesome name="play" size={24} color="gray" />
+      <TouchableWithoutFeedback onPress={() => playerContext?.setVideo(null)}>
+        <Feather name="x" size={24} color="gray" />
+      </TouchableWithoutFeedback>
+    </View>
   )
 }
 

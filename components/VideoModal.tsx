@@ -1,5 +1,10 @@
 import React, { useRef, useEffect } from 'react'
-import { Dimensions, StyleSheet, View } from 'react-native'
+import {
+  Dimensions,
+  StyleSheet,
+  View,
+  TouchableWithoutFeedback,
+} from 'react-native'
 import { Video } from 'expo-av'
 import Constants from 'expo-constants'
 import Animated, {
@@ -81,12 +86,19 @@ const withOffset = (
         cond(
           or(eq(gestureState, State.END), eq(gestureState, State.UNDETERMINED)),
           [
-            cond(and(not(state.finished), not(clockRunning(clock))), [
-              startClock(clock),
-              set(offset, bottomBound),
-              set(state.position, offset),
-              set(config.toValue, new Value(0)),
-            ]),
+            cond(
+              and(
+                not(state.finished),
+                not(clockRunning(clock)),
+                or(eq(offset, -1), eq(offset, bottomBound))
+              ),
+              [
+                startClock(clock),
+                set(offset, bottomBound),
+                set(state.position, offset),
+                set(config.toValue, new Value(0)),
+              ]
+            ),
             spring(clock, state, config),
             cond(
               state.finished,
@@ -155,7 +167,7 @@ const VideoModal = ({ video }: VideoModalProps) => {
   const tY = useRef<Value<number>>(new Value(bottomBound))
   const gestureState = useRef<Value<State>>(new Value(State.UNDETERMINED))
   const translationY = useRef<Value<number>>(new Value(0))
-  const offset = useRef<Value<number>>(new Value(0))
+  const offset = useRef<Value<number>>(new Value(-1))
   const velocityY = useRef<Value<number>>(new Value(0))
   const snapPoint = useRef<Node<number>>(
     cond(
@@ -238,6 +250,10 @@ const VideoModal = ({ video }: VideoModalProps) => {
     },
   ])
 
+  const handlePressPlayerControls = () => {
+    slideDirection.current.setValue(0)
+  }
+
   return (
     <>
       <View style={{ height: statusBarHeight, backgroundColor: 'white' }} />
@@ -261,18 +277,22 @@ const VideoModal = ({ video }: VideoModalProps) => {
               },
             ]}
           >
-            <AnimatedVideo
-              source={video.video}
-              style={{
-                width: videoWidth.current,
-                height: videoControlsHeight.current,
-              }}
-              resizeMode={Video.RESIZE_MODE_COVER}
-              shouldPlay={false}
-            />
-            <View style={{ ...StyleSheet.absoluteFillObject }}>
-              <PlayerControls title={video.title} onPress={() => true} />
-            </View>
+            <TouchableWithoutFeedback onPress={handlePressPlayerControls}>
+              <View>
+                <AnimatedVideo
+                  source={video.video}
+                  style={{
+                    width: videoWidth.current,
+                    height: videoControlsHeight.current,
+                  }}
+                  resizeMode={Video.RESIZE_MODE_COVER}
+                  shouldPlay={false}
+                />
+                <View style={{ ...StyleSheet.absoluteFillObject }}>
+                  <PlayerControls title={video.title} />
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </Animated.View>
           <Animated.View style={styles.videoContentContainer}>
             <Animated.View style={{ opacity: videoContentOpacity.current }}>
