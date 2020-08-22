@@ -65,10 +65,10 @@ const withOffset = (
   }
 
   const config = {
-    damping: 20,
+    damping: 40,
     mass: 1,
-    stiffness: 100,
-    overshootClamping: false,
+    stiffness: 400,
+    overshootClamping: true,
     restSpeedThreshold: 1,
     restDisplacementThreshold: 0.5,
     toValue: new Value(0),
