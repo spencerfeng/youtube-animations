@@ -61,7 +61,7 @@ const slideUp = () => {
 
   const config = {
     toValue: new Value(0),
-    duration: 300,
+    duration: 3000,
     easing: Easing.inOut(Easing.ease),
   }
 
@@ -116,8 +116,9 @@ const withOffset = (
         spring(clock, state, config),
         cond(
           state.finished,
-          [stopClock(clock), set(state.finished, 0)],
-          set(offset, snapPoint)
+          [stopClock(clock), set(state.finished, 0), set(offset, snapPoint)],
+
+          set(offset, state.position)
         ),
         state.position,
       ],
