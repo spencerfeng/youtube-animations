@@ -17,9 +17,12 @@ const styles = StyleSheet.create({
 
 const PlayerProvider = ({ children }: PlayerProviderProps) => {
   const [video, setVideo] = useState<Video | null>(null)
+  const [isAnimationFinished, setIsAnimationFinished] = useState<boolean>(true)
 
   return (
-    <PlayerContext.Provider value={{ video, setVideo }}>
+    <PlayerContext.Provider
+      value={{ video, setVideo, isAnimationFinished, setIsAnimationFinished }}
+    >
       <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
         <View style={StyleSheet.absoluteFill}>{children}</View>

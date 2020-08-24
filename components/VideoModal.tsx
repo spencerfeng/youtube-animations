@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useContext } from 'react'
 import {
   Dimensions,
   StyleSheet,
@@ -29,6 +29,7 @@ import Animated, {
   interpolate,
   Extrapolate,
   or,
+  call,
 } from 'react-native-reanimated'
 import { clamp } from 'react-native-redash'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
@@ -36,6 +37,7 @@ import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Video as VideoModel } from './videos'
 import VideoContent from './VideoContent'
 import PlayerControls, { PLACEHOLDER_WIDTH } from './PlayerControls'
+import PlayerContext, { PlayerContextInterface } from './PlayerContext'
 
 const { width, height } = Dimensions.get('window')
 const { statusBarHeight } = Constants
@@ -58,7 +60,8 @@ const withOffset = (
   gestureState: Value<State>,
   velocityY: Value<number>,
   snapPoint: Node<number>,
-  slideDirection: Value<number>
+  slideDirection: Value<number>,
+  playerContext: PlayerContextInterface | undefined
 ) => {
   const clock = new Clock()
 
@@ -97,6 +100,7 @@ const withOffset = (
                 set(offset, bottomBound),
                 set(state.position, offset),
                 set(config.toValue, new Value(0)),
+                call([], () => playerContext?.setIsAnimationFinished(false)),
               ]
             ),
             spring(clock, state, config),
@@ -107,6 +111,7 @@ const withOffset = (
                 set(state.finished, 0),
                 set(offset, 0),
                 set(slideDirection, -1),
+                call([], () => playerContext?.setIsAnimationFinished(true)),
               ],
               [set(offset, state.position)]
             ),
@@ -118,6 +123,7 @@ const withOffset = (
                 stopClock(clock),
                 set(slideDirection, -1),
                 add(translationY, offset),
+                call([], () => playerContext?.setIsAnimationFinished(true)),
               ]),
             ]),
           ]
@@ -136,6 +142,7 @@ const withOffset = (
                 set(offset, add(translationY, offset)),
                 set(state.position, offset),
                 set(config.toValue, snapPoint),
+                call([], () => playerContext?.setIsAnimationFinished(false)),
               ]),
               spring(clock, state, config),
               cond(
@@ -144,6 +151,7 @@ const withOffset = (
                   stopClock(clock),
                   set(state.finished, 0),
                   set(offset, snapPoint),
+                  call([], () => playerContext?.setIsAnimationFinished(true)),
                 ],
                 set(offset, state.position)
               ),
@@ -151,7 +159,10 @@ const withOffset = (
             ],
             [
               cond(eq(gestureState, State.BEGAN), [
-                cond(clockRunning(clock), stopClock(clock)),
+                cond(clockRunning(clock), [
+                  stopClock(clock),
+                  call([], () => playerContext?.setIsAnimationFinished(true)),
+                ]),
               ]),
               add(translationY, offset),
             ]
@@ -163,6 +174,8 @@ const withOffset = (
 }
 
 const VideoModal = ({ video }: VideoModalProps) => {
+  const playerContext = useContext(PlayerContext)
+
   const slideDirection = useRef<Value<-1 | 0 | 1>>(new Value(0))
   const tY = useRef<Value<number>>(new Value(bottomBound))
   const gestureState = useRef<Value<State>>(new Value(State.UNDETERMINED))
@@ -223,7 +236,8 @@ const VideoModal = ({ video }: VideoModalProps) => {
             gestureState.current,
             velocityY.current,
             snapPoint.current,
-            slideDirection.current
+            slideDirection.current,
+            playerContext
           ),
           0,
           bottomBound

@@ -38,6 +38,11 @@ interface PlayerControlsProps {
 const PlayerControls = ({ title }: PlayerControlsProps) => {
   const playerContext = useContext(PlayerContext)
 
+  const handlePressCloseVideoButton = () => {
+    playerContext?.setVideo(null)
+    playerContext?.setIsAnimationFinished(true)
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.placeholder} />
@@ -45,7 +50,7 @@ const PlayerControls = ({ title }: PlayerControlsProps) => {
         {title}
       </Text>
       <FontAwesome name="play" size={24} color="gray" />
-      <TouchableWithoutFeedback onPress={() => playerContext?.setVideo(null)}>
+      <TouchableWithoutFeedback onPress={handlePressCloseVideoButton}>
         <Feather name="x" size={24} color="gray" />
       </TouchableWithoutFeedback>
     </View>

@@ -17,8 +17,14 @@ interface VideoThumbnailProps {
 const VideoThumbnail = ({ video }: VideoThumbnailProps) => {
   const playerContext = useContext(PlayerContext)
 
+  const handlePressVideoThumbnail = () => {
+    if (playerContext?.isAnimationFinished) {
+      playerContext.setVideo(video)
+    }
+  }
+
   return (
-    <TouchableWithoutFeedback onPress={() => playerContext?.setVideo(video)}>
+    <TouchableWithoutFeedback onPress={handlePressVideoThumbnail}>
       <View>
         <Image source={video.thumbnail} style={styles.thumbnail} />
         <View style={styles.description}>
