@@ -4,6 +4,8 @@ import { Asset } from 'expo-asset'
 import { Value } from 'react-native-reanimated'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Ionicons } from '@expo/vector-icons'
 
 import { Home, videos } from './components'
 import PlayerContext from './components/PlayerContext'
@@ -50,7 +52,16 @@ const App = () => {
       >
         <NavigationContainer>
           <Tab.Navigator tabBar={(props) => <AppTabBar {...props} />}>
-            <Tab.Screen name="Home" component={Home} />
+            <Tab.Screen
+              name="Home"
+              component={Home}
+              options={{
+                tabBarLabel: 'Home',
+                tabBarIcon: ({ color, size }) => (
+                  <Ionicons name="ios-home" size={size} color={color} />
+                ),
+              }}
+            />
           </Tab.Navigator>
         </NavigationContainer>
       </PlayerContext.Provider>

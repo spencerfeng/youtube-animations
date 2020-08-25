@@ -1,5 +1,5 @@
 import React, { useContext, useRef } from 'react'
-import { Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import {
   BottomTabBarProps,
   BottomTabBarOptions,
@@ -23,6 +23,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     borderTopColor: '#cccccc',
+  },
+  tabInner: {
+    alignItems: 'center',
   },
 })
 
@@ -100,6 +103,14 @@ const AppTabBar = ({
 
         const isFocused = state.index === index
 
+        const icon = options.tabBarIcon
+          ? options.tabBarIcon({
+              focused: isFocused,
+              color: isFocused ? '#000000' : '#cccccc',
+              size: 24,
+            })
+          : undefined
+
         const onPress = () => {
           const event = navigation.emit({
             type: 'tabPress',
@@ -129,14 +140,17 @@ const AppTabBar = ({
             style={{ flex: 1 }}
             key={index}
           >
-            <Text
-              style={{
-                color: isFocused ? '#000000' : '#cccccc',
-                textAlign: 'center',
-              }}
-            >
-              {label}
-            </Text>
+            <View style={styles.tabInner}>
+              {icon && icon}
+              <Text
+                style={{
+                  color: isFocused ? '#000000' : '#cccccc',
+                  textAlign: 'center',
+                }}
+              >
+                {label}
+              </Text>
+            </View>
           </TouchableOpacity>
         )
       })}
