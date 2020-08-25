@@ -38,6 +38,7 @@ import { Video as VideoModel } from './videos'
 import VideoContent from './VideoContent'
 import PlayerControls, { PLACEHOLDER_WIDTH } from './PlayerControls'
 import PlayerContext, { PlayerContextInterface } from './PlayerContext'
+import { TAB_BAR_MAX_HEIGHT } from './AppTabBar'
 
 const { width, height } = Dimensions.get('window')
 const { statusBarHeight } = Constants
@@ -46,7 +47,8 @@ const PLAYER_CONTROLS_MIN_HEIGHT = 80
 const SNAP_POINT_THRESHOLD_POINT = 100
 const VIDEO_WIDTH_CHANGE_HEIGHT_DELTA = 50
 
-const bottomBound = height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT
+const bottomBound =
+  height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT - TAB_BAR_MAX_HEIGHT
 
 const AnimatedVideo = Animated.createAnimatedComponent(Video)
 
@@ -270,7 +272,6 @@ const VideoModal = ({ video }: VideoModalProps) => {
 
   return (
     <>
-      <View style={{ height: statusBarHeight, backgroundColor: 'white' }} />
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onGestureEvent}
@@ -340,6 +341,6 @@ const styles = StyleSheet.create({
   videoContentContainer: {
     backgroundColor: 'white',
     width,
-    height: height - width / 1.78 - statusBarHeight,
+    height: height - width / 1.78 - statusBarHeight - TAB_BAR_MAX_HEIGHT,
   },
 })
