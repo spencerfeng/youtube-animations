@@ -10,13 +10,14 @@ import Animated, {
   Extrapolate,
 } from 'react-native-reanimated'
 
+import {
+  TAB_BAR_MAX_HEIGHT,
+  TAB_BAR_TOP_PADDING,
+  TAB_BAR_BORDER_TOP_WIDTH,
+} from '../constants'
+
 import AnimationContext from './AnimationContext'
 import { bottomBound } from './VideoModal'
-
-export const TAB_BAR_MAX_HEIGHT = 80
-export const TAB_BAR_TOP_PADDING = 15
-export const TAB_BAR_INTRINSIC_HEIGHT = 10
-export const TAB_BAR_BORDER_TOP_WIDTH = 1
 
 const styles = StyleSheet.create({
   container: {

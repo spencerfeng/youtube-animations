@@ -34,19 +34,21 @@ import Animated, {
 import { clamp } from 'react-native-redash'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 
+import {
+  PLAYER_CONTROLS_MIN_HEIGHT,
+  SNAP_POINT_THRESHOLD_POINT,
+  VIDEO_WIDTH_CHANGE_HEIGHT_DELTA,
+  TAB_BAR_MAX_HEIGHT,
+} from '../constants'
+
 import { Video as VideoModel } from './videos'
 import VideoContent from './VideoContent'
 import PlayerControls, { PLACEHOLDER_WIDTH } from './PlayerControls'
 import PlayerContext, { PlayerContextInterface } from './PlayerContext'
 import AnimationContext from './AnimationContext'
-import { TAB_BAR_MAX_HEIGHT } from './AppTabBar'
 
 const { width, height } = Dimensions.get('window')
 const { statusBarHeight } = Constants
-
-const PLAYER_CONTROLS_MIN_HEIGHT = 80
-const SNAP_POINT_THRESHOLD_POINT = 100
-const VIDEO_WIDTH_CHANGE_HEIGHT_DELTA = 50
 
 export const bottomBound =
   height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT - TAB_BAR_MAX_HEIGHT

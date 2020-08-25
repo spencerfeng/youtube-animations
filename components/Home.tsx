@@ -13,12 +13,13 @@ import Animated, {
   Extrapolate,
 } from 'react-native-reanimated'
 
+import { TAB_BAR_MAX_HEIGHT } from '../constants'
+
 import VideoThumbnail from './VideoThumbnail'
 import videos from './videos'
 import PlayerContext from './PlayerContext'
 import AnimationContext from './AnimationContext'
 import VideoModal, { bottomBound } from './VideoModal'
-import { TAB_BAR_MAX_HEIGHT } from './AppTabBar'
 
 const { height } = Dimensions.get('window')
 
