@@ -391,6 +391,5 @@ const styles = StyleSheet.create({
   videoContentContainer: {
     backgroundColor: 'white',
     width,
-    height: height - width / 1.78 - statusBarHeight - TAB_BAR_MAX_HEIGHT,
   },
 })
