@@ -34,19 +34,24 @@ import Animated, {
 import { clamp } from 'react-native-redash'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 
+import {
+  PLAYER_CONTROLS_MIN_HEIGHT,
+  SNAP_POINT_THRESHOLD_POINT,
+  VIDEO_WIDTH_CHANGE_HEIGHT_DELTA,
+  TAB_BAR_MAX_HEIGHT,
+} from '../constants'
+
 import { Video as VideoModel } from './videos'
 import VideoContent from './VideoContent'
 import PlayerControls, { PLACEHOLDER_WIDTH } from './PlayerControls'
 import PlayerContext, { PlayerContextInterface } from './PlayerContext'
+import AnimationContext from './AnimationContext'
 
 const { width, height } = Dimensions.get('window')
 const { statusBarHeight } = Constants
 
-const PLAYER_CONTROLS_MIN_HEIGHT = 80
-const SNAP_POINT_THRESHOLD_POINT = 100
-const VIDEO_WIDTH_CHANGE_HEIGHT_DELTA = 50
-
-const bottomBound = height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT
+export const bottomBound =
+  height - statusBarHeight - PLAYER_CONTROLS_MIN_HEIGHT - TAB_BAR_MAX_HEIGHT
 
 const AnimatedVideo = Animated.createAnimatedComponent(Video)
 
@@ -175,9 +180,9 @@ const withOffset = (
 
 const VideoModal = ({ video }: VideoModalProps) => {
   const playerContext = useContext(PlayerContext)
+  const animationContext = useContext(AnimationContext)
 
   const slideDirection = useRef<Value<-1 | 0 | 1>>(new Value(0))
-  const tY = useRef<Value<number>>(new Value(bottomBound))
   const gestureState = useRef<Value<State>>(new Value(State.UNDETERMINED))
   const translationY = useRef<Value<number>>(new Value(0))
   const offset = useRef<Value<number>>(new Value(-1))
@@ -196,27 +201,61 @@ const VideoModal = ({ video }: VideoModalProps) => {
     )
   )
   const videoControlsHeight = useRef<Node<number>>(
-    interpolate(tY.current, {
-      inputRange: [0, bottomBound],
-      outputRange: [width / 1.78, PLAYER_CONTROLS_MIN_HEIGHT],
-      extrapolate: Extrapolate.CLAMP,
-    })
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? 0
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [0, bottomBound],
+        outputRange: [width / 1.78, PLAYER_CONTROLS_MIN_HEIGHT],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
   )
 
   const videoWidth = useRef<Node<number>>(
-    interpolate(tY.current, {
-      inputRange: [bottomBound - VIDEO_WIDTH_CHANGE_HEIGHT_DELTA, bottomBound],
-      outputRange: [width, PLACEHOLDER_WIDTH],
-      extrapolate: Extrapolate.CLAMP,
-    })
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? bottomBound - VIDEO_WIDTH_CHANGE_HEIGHT_DELTA
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [
+          bottomBound - VIDEO_WIDTH_CHANGE_HEIGHT_DELTA,
+          bottomBound,
+        ],
+        outputRange: [width, PLACEHOLDER_WIDTH],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
+  )
+
+  const videoContentContainerHeight = useRef<Node<number>>(
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? bottomBound - VIDEO_WIDTH_CHANGE_HEIGHT_DELTA
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [0, bottomBound],
+        outputRange: [
+          height - width / 1.78 - statusBarHeight,
+          height - width / 1.78 - statusBarHeight - TAB_BAR_MAX_HEIGHT,
+        ],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
   )
 
   const videoContentOpacity = useRef<Node<number>>(
-    interpolate(tY.current, {
-      inputRange: [0, bottomBound],
-      outputRange: [1, 0],
-      extrapolate: Extrapolate.CLAMP,
-    })
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? 0
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [0, bottomBound],
+        outputRange: [1, 0],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
   )
 
   useEffect(() => {
@@ -226,24 +265,25 @@ const VideoModal = ({ video }: VideoModalProps) => {
   }, [video])
 
   useCode(
-    () => [
-      set(
-        tY.current,
-        clamp(
-          withOffset(
-            offset.current,
-            translationY.current,
-            gestureState.current,
-            velocityY.current,
-            snapPoint.current,
-            slideDirection.current,
-            playerContext
-          ),
-          0,
-          bottomBound
-        )
-      ),
-    ],
+    () =>
+      animationContext?.modalTY?.current !== undefined && [
+        set(
+          animationContext?.modalTY?.current,
+          clamp(
+            withOffset(
+              offset.current,
+              translationY.current,
+              gestureState.current,
+              velocityY.current,
+              snapPoint.current,
+              slideDirection.current,
+              playerContext
+            ),
+            0,
+            bottomBound
+          )
+        ),
+      ],
     [
       translationY.current,
       slideDirection.current,
@@ -270,7 +310,6 @@ const VideoModal = ({ video }: VideoModalProps) => {
 
   return (
     <>
-      <View style={{ height: statusBarHeight, backgroundColor: 'white' }} />
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onGestureEvent}
@@ -279,7 +318,14 @@ const VideoModal = ({ video }: VideoModalProps) => {
           style={[
             styles.container,
             {
-              transform: [{ translateY: tY.current }],
+              transform: [
+                {
+                  translateY:
+                    animationContext?.modalTY?.current === undefined
+                      ? 0
+                      : animationContext?.modalTY?.current,
+                },
+              ],
             },
           ]}
         >
@@ -308,7 +354,12 @@ const VideoModal = ({ video }: VideoModalProps) => {
               </View>
             </TouchableWithoutFeedback>
           </Animated.View>
-          <Animated.View style={styles.videoContentContainer}>
+          <Animated.View
+            style={[
+              styles.videoContentContainer,
+              { height: videoContentContainerHeight.current },
+            ]}
+          >
             <Animated.View style={{ opacity: videoContentOpacity.current }}>
               <VideoContent {...{ video }} />
             </Animated.View>
@@ -340,6 +391,5 @@ const styles = StyleSheet.create({
   videoContentContainer: {
     backgroundColor: 'white',
     width,
-    height: height - width / 1.78 - statusBarHeight,
   },
 })
