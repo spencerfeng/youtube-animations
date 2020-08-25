@@ -1,19 +1,27 @@
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import React, { useContext, useRef } from 'react'
+import { Text, TouchableOpacity, StyleSheet } from 'react-native'
 import {
   BottomTabBarProps,
   BottomTabBarOptions,
 } from '@react-navigation/bottom-tabs'
+import Animated, {
+  Node,
+  interpolate,
+  Extrapolate,
+} from 'react-native-reanimated'
+
+import AnimationContext from './AnimationContext'
+import { bottomBound } from './VideoModal'
 
 export const TAB_BAR_MAX_HEIGHT = 80
+export const TAB_BAR_TOP_PADDING = 15
+export const TAB_BAR_INTRINSIC_HEIGHT = 10
+export const TAB_BAR_BORDER_TOP_WIDTH = 1
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingTop: 15,
-    height: TAB_BAR_MAX_HEIGHT,
     borderTopColor: '#cccccc',
-    borderTopWidth: 1,
   },
 })
 
@@ -23,13 +31,62 @@ const AppTabBar = ({
   navigation,
 }: BottomTabBarProps<BottomTabBarOptions>) => {
   const focusedOptions = descriptors[state.routes[state.index].key].options
+  const animationContext = useContext(AnimationContext)
+
+  const tabBarHeight = useRef<Node<number>>(
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? 0
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [0, bottomBound],
+        outputRange: [0, TAB_BAR_MAX_HEIGHT],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
+  )
+
+  const tabBarTopPadding = useRef<Node<number>>(
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? 0
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [0, bottomBound],
+        outputRange: [0, TAB_BAR_TOP_PADDING],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
+  )
+
+  const tabBarBorderTopWidth = useRef<Node<number>>(
+    interpolate(
+      animationContext?.modalTY?.current === undefined
+        ? 0
+        : animationContext?.modalTY?.current,
+      {
+        inputRange: [0, bottomBound],
+        outputRange: [0, TAB_BAR_BORDER_TOP_WIDTH],
+        extrapolate: Extrapolate.CLAMP,
+      }
+    )
+  )
 
   if (focusedOptions.tabBarVisible === false) {
     return null
   }
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          height: tabBarHeight.current,
+          paddingTop: tabBarTopPadding.current,
+          borderTopWidth: tabBarBorderTopWidth.current,
+        },
+      ]}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key]
         const label =
@@ -82,7 +139,7 @@ const AppTabBar = ({
           </TouchableOpacity>
         )
       })}
-    </View>
+    </Animated.View>
   )
 }
 
